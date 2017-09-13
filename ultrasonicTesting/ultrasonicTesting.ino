@@ -16,25 +16,7 @@ void setup() {
 }
 
 void loop() {
-  long duration,distance;
-
-  // 'reset' transmitter
-  digitalWrite(TRIGPIN,LOW);
-  delayMicroseconds(2);
-
-  // transmit
-  digitalWrite(TRIGPIN,HIGH);
-  delayMicroseconds(TRANSMITTIME);
-  digitalWrite(TRIGPIN,LOW);
-
-  // calculate distance
-  duration = pulseIn(ECHOPIN,HIGH);
-  distance = (duration/2) * DISTANCECONSTANT;
-
   // write to terminal
-  Serial.print(distance);
+  Serial.print(getDistanceMM(TRIGPIN,ECHOPIN));
   Serial.println(" mm");
-
-  // delay
-  delay(CYCLEDELAYTIME);
 }
