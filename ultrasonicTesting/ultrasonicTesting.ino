@@ -5,8 +5,6 @@
 
 #define TRIGPIN 13
 #define ECHOPIN 12
-#define TRANSMITTIME 10 // in microseconds
-#define DISTANCECONSTANT 1/2.9
 #define CYCLEDELAYTIME 500
 
 void setup() {
@@ -16,25 +14,8 @@ void setup() {
 }
 
 void loop() {
-  long duration,distance;
-
-  // 'reset' transmitter
-  digitalWrite(TRIGPIN,LOW);
-  delayMicroseconds(2);
-
-  // transmit
-  digitalWrite(TRIGPIN,HIGH);
-  delayMicroseconds(TRANSMITTIME);
-  digitalWrite(TRIGPIN,LOW);
-
-  // calculate distance
-  duration = pulseIn(ECHOPIN,HIGH);
-  distance = (duration/2) * DISTANCECONSTANT;
-
   // write to terminal
-  Serial.print(distance);
+  Serial.print(getDistanceMM(TRIGPIN,ECHOPIN));
   Serial.println(" mm");
-
-  // delay
   delay(CYCLEDELAYTIME);
 }
