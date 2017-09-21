@@ -3,19 +3,30 @@
  * Otherwise, written by Vaughn J. Bernard
  */
 
-#define TRIGPIN 13
+#define TRIGPIN 10
 #define ECHOPIN 12
+#define LEDPIN 13
 #define CYCLEDELAYTIME 500
 
 void setup() {
   Serial.begin(9600);
   pinMode(TRIGPIN,OUTPUT);
   pinMode(ECHOPIN,INPUT);
+  pinMode(LEDPIN,OUTPUT);
 }
 
 void loop() {
+  float dist = getDistanceMM(TRIGPIN,ECHOPIN);
   // write to terminal
-  Serial.print(getDistanceMM(TRIGPIN,ECHOPIN));
+  Serial.print(dist);
   Serial.println(" mm");
+
+  if (dist <= 200){
+    digitalWrite(LEDPIN,HIGH);
+  }
+  else{
+    digitalWrite(LEDPIN,LOW);
+  }
+  
   delay(CYCLEDELAYTIME);
 }
