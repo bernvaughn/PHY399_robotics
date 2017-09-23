@@ -2,9 +2,8 @@
  * Function to get distance data
  */
 #define TRANSMITTIME 10 // in microseconds
-#define DISTANCECONSTANT 1/2.9
  
-int getDistanceMM(int trigPin,int echoPin) {
+int getDistance(int trigPin,int echoPin) {
   //In: trigPin as where the ultrasonic sensor's trigger pin is wired to the arduino.
   //In: echoPin as where the ultrasonic sensor's echo pin is wired to the arduino.
   // NOTE:  trigPin must be set to WRITE
@@ -31,7 +30,7 @@ int getDistanceMM(int trigPin,int echoPin) {
   
     // calculate distance
     duration = pulseIn(echoPin,HIGH);
-    distance[i] = (duration/2) * DISTANCECONSTANT;
+    distance[i] = (duration/2);
   }
 
   return (distance[0]+distance[1])/2;
