@@ -10,6 +10,10 @@
 #define DIRL1 7
 #define DIRL2 4
 
+#define KP 50
+#define KI 10
+#define KD 10
+
 #define CYCLEDELAYTIME 10
 
 float gTargetDistance = -1;
@@ -77,7 +81,13 @@ void setup() {
 
 }
 
+float oldDist = getDistance(TRIGPIN,ECHOPIN);
+float sumDist = oldDist;
 void loop() {
+  float dist = getDistance(TRIGPIN,ECHOPIN);
+  sumDist+=dist;
+  float pid = KP*dist + KI*sumDist + KD*(dist-oldDist);
   driveForward(2000,255,255);
+  oldDist = dist;
 
 }
