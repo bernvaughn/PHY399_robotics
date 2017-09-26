@@ -2,6 +2,28 @@
  * Function to get distance data
  */
 #define TRANSMITTIME 10 // in microseconds
+
+void getTargetDistance(){
+  // Uses gTargetDistance and gTargetDistanceCount
+  float thisDistance = getDistance(TRIGPIN,ECHOPIN);
+    
+  if (gTargetDistanceCount == 0){
+    // if there is no current target distance, set it.
+    float testDistance = getDistance(TRIGPIN,ECHOPIN);
+    if ((thisDistance/10 < testDistance) and (thisDistance*10 > testDistance)){
+      // make sure the first distance isn't an anomally
+      gTargetDistance=thisDistance;
+      gTargetDistanceCount = 1;
+    }
+  }
+  else if ((thisDistance/10 < gTargetDistance) and (thisDistance*10 > gTargetDistance)){
+    // update gTargetDistance with new average if not anomally
+    gTargetDistance*=gTargetDistanceCount;
+    gTargetDistance+=thisDistance;
+    gTargetDistance/=gTargetDistanceCount+1;
+    gTargetDistanceCount+=1;
+  }
+}
  
 int getDistance(int trigPin,int echoPin) {
   //In: trigPin as where the ultrasonic sensor's trigger pin is wired to the arduino.
