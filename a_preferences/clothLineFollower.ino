@@ -1,3 +1,5 @@
+
+
 // global variables
 float gTargetDistance = -1;
 int gTargetDistanceCount = 0;
@@ -14,6 +16,11 @@ void setup() {
   pinMode(DIRR2,OUTPUT);
   pinMode(DIRL1,OUTPUT);
   pinMode(DIRL2,OUTPUT);
+
+  digitalWrite(DIRR1, HIGH);
+  digitalWrite(DIRR2, LOW);
+  digitalWrite(DIRL1, HIGH);
+  digitalWrite(DIRL2, LOW);
 
   Serial.begin(9600);
 
@@ -35,7 +42,13 @@ void loop() {
   float dist = getDistance(TRIGPIN,ECHOPIN);
   sumDist+=dist;
   float pid = KP*dist + KI*sumDist + KD*(dist-oldDist);
-  moveDirection(pid+DIRTRIM);
+
+  driveForward(150,150);
+  /*driveForward(50,50+((gTargetDistance-dist)));
+
+  Serial.print(50);
+  Serial.print(" ");
+  Serial.println(50+((gTargetDistance-dist)));*/
 
   // pseudocode
   /*
