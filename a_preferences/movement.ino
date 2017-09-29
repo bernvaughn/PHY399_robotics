@@ -4,5 +4,8 @@ void driveForward(int speedL, int speedR){
   //Use digitalWrite to send high and low signals
   // to dirL1 and dirL2 to set motor direction.
   analogWrite(DRIVER, speedR);
-  delay(CYCLEDELAYTIME);
+  Serial.print("Speed(l,r): ");
+  Serial.print(speedL);
+  Serial.print(" ");
+  Serial.println(speedR);
 }

@@ -9,6 +9,7 @@ void setup() {
   pinMode(TRIGPIN,OUTPUT);
   pinMode(ECHOPIN,INPUT);
   pinMode(LEDPIN,OUTPUT);
+  pinMode(SBUTTONPIN,INPUT_PULLUP);
   
   pinMode(DRIVER,OUTPUT);
   pinMode(DRIVEL,OUTPUT);
@@ -27,48 +28,64 @@ void setup() {
   // get target distance until connection is broken.
   // I can't get the button working. I don't know why.
   // I just disconnect a wire and this works.
-  while(digitalRead(SBUTTONPIN)==HIGH){
+  while(digitalRead(SBUTTONPIN)){
     getTargetDistance();
     Serial.println(gTargetDistance);
+  }
+  // the button must be released before the loop() starts
+  while(not digitalRead(SBUTTONPIN)){
+    continue;
   }
 
 }
 
 // global variables for loop
-float oldDist = getDistance(TRIGPIN,ECHOPIN);
+float oldDist = gTargetDistance-getDistance(TRIGPIN,ECHOPIN);
 float sumDist = oldDist;
+int sw = 0;
 
 void loop() {
-  float dist = getDistance(TRIGPIN,ECHOPIN);
-  sumDist+=dist;
-  float pid = KP*dist + KI*sumDist + KD*(dist-oldDist);
+  if(sw==0){
+    // pid
+    float dist = gTargetDistance-getDistance(TRIGPIN,ECHOPIN);
+    sumDist+=dist;
+    if(floor(dist/10)==0){
+      sumDist = 0;
+    }
+    
+    float pid = KP*dist + KI*sumDist + KD*(dist-oldDist); //pid
 
-  driveForward(150,150);
-  /*driveForward(50,50+((gTargetDistance-dist)));
+    if (dist<=0){
+      driveForward(200,max(200-abs(pid),0));
+    }
+    else{
+      driveForward(max(200-abs(pid),0),200);
+    }
 
-  Serial.print(50);
-  Serial.print(" ");
-  Serial.println(50+((gTargetDistance-dist)));*/
+    oldDist = dist;
+    
+    delay(CYCLEDELAYTIME);
+    
+    // exit loop if button is pressed
+    if (not digitalRead(SBUTTONPIN)){
+      sw=1;
+    }
 
-  // pseudocode
-  /*
-  if the distance is getting lower, increase power to close wheel
-  if the distance is getting higher, increase power to far wheel
-
-  need to take in to account the angle?
-  */
-
-  // serial interface
-  /*
-  Serial.print("dist oldDist sumDist ");
-  Serial.print(dist);
-  Serial.print(" ");
-  Serial.print(oldDist);
-  Serial.print(" ");
-  Serial.print(sumDist);
-  Serial.println();
-  */
-
-  oldDist = dist;
+    // serial interface
+    Serial.print("dist oldDist sumDist ");
+    Serial.print(dist);
+    Serial.print(" ");
+    Serial.print(oldDist);
+    Serial.print(" ");
+    Serial.print(sumDist);
+    Serial.println();
+    Serial.print("PID: ");
+    Serial.println(pid);
+  }
+  else{
+    // stop
+    driveForward(0,0);
+  }
+  
 
 }
