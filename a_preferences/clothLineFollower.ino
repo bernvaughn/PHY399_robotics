@@ -55,12 +55,9 @@ void loop() {
     
     float pid = KP*dist + KI*sumDist + KD*(dist-oldDist); //pid
 
-    if (dist<=0){
-      driveForward(200,max(200-abs(pid),0));
-    }
-    else{
-      driveForward(max(200-abs(pid),0),200);
-    }
+    pid = map(pid,-200,200,-50,50);
+
+    driveForward(max(min(200-pid,255),0),max(min(200+pid,255),0));
 
     oldDist = dist;
     
@@ -72,15 +69,18 @@ void loop() {
     }
 
     // serial interface
-    Serial.print("dist oldDist sumDist ");
-    Serial.print(dist);
-    Serial.print(" ");
-    Serial.print(oldDist);
-    Serial.print(" ");
-    Serial.print(sumDist);
-    Serial.println();
-    Serial.print("PID: ");
-    Serial.println(pid);
+    if (Serial){
+      Serial.print("dist oldDist sumDist ");
+      Serial.print(dist);
+      Serial.print(" ");
+      Serial.print(oldDist);
+      Serial.print(" ");
+      Serial.print(sumDist);
+      //Serial.println();
+      Serial.print("PID: ");
+      Serial.println(pid);
+    }
+    
   }
   else{
     // stop

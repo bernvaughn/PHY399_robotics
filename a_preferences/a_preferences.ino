@@ -10,10 +10,10 @@
 #define DIRL1 7
 #define DIRL2 4
 
-#define KP 1
-#define KI 1
-#define KD 1
+#define KP 0.2
+#define KI 0.0
+#define KD 0.1
 
 #define WIDTH 15 // cm
 
-#define CYCLEDELAYTIME 10
+#define CYCLEDELAYTIME 100
