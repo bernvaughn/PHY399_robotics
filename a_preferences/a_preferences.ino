@@ -10,9 +10,9 @@
 #define DIRL1 7
 #define DIRL2 4
 
-#define KP 0.2
-#define KI 0.0
-#define KD 0.1
+#define KP 0.01
+#define KI 0.006
+#define KD 0.02
 
 #define WIDTH 15 // cm
 

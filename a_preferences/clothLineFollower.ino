@@ -49,15 +49,19 @@ void loop() {
     // pid
     float dist = gTargetDistance-getDistance(TRIGPIN,ECHOPIN);
     sumDist+=dist;
-    if(floor(dist/10)==0){
+    if(abs(dist)-100<0){
       sumDist = 0;
     }
     
-    float pid = KP*dist + KI*sumDist + KD*(dist-oldDist); //pid
+    float pid = KP*dist + KD*(dist-oldDist); //pid
+    if (pid < 0){
+      pid += KI*sumDist;
+    }
+    else{
+      pid -=KI*sumDist;
+    }
 
-    pid = map(pid,-200,200,-50,50);
-
-    driveForward(max(min(200-pid,255),0),max(min(200+pid,255),0));
+    driveForward(max(min(200-pid,254),1),max(min(200+pid,254),1));
 
     oldDist = dist;
     
@@ -78,7 +82,8 @@ void loop() {
       Serial.print(sumDist);
       //Serial.println();
       Serial.print("PID: ");
-      Serial.println(pid);
+      Serial.print(pid);
+      Serial.print(" ");
     }
     
   }
