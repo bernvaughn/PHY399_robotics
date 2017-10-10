@@ -40,13 +40,49 @@ def printBadMap(aList,f):
         print("",file=file)
     file.close()
 
+# I call it bad because it produces a list with only two values.
+def badList(aList):
+    result = []
+    for y in aList:
+        thisLine = []
+        for x in y:
+            if x < 150: thisLine.append("X")
+            else: thisLine.append("_")
+        result.append(thisLine)
+    return result
+
+def growWaldo(waldo):
+    result = []
+    for y in waldo:
+        thisLine = []
+        for x in y:
+            thisLine+=x+x
+        result.append(thisLine)
+        result.append(thisLine)
+    return result
+
+def likeness(waldo,maybeWaldo):
+    likeness,count = 0,0
+    for yi in range(len(waldo)):
+        for xi in range(len(waldo[0])):
+            count+=1
+            if waldo[xi][yi] == maybeWaldo[xi][yi]: likeness += 1
+    return likeness/count
         
 def main():
     waldo = (pngToList(gResourceDir+gWaldoPNG))
-    printBadMap(waldo,"walOut.txt")
     toSearch = (pngToList(gResourceDir+gImageToSearch))
-    print("");
-    printBadMap(toSearch,"mapOut.txt")
+    waldo = badList(waldo)
+    toSearch = badList(toSearch)
+    bigWaldo = growWaldo(waldo)
+    for item in waldo:
+        print(item)
+    print("-"*49)
+    for item in bigWaldo:
+        print(item)
+    print("-"*49)
+    print(likeness(waldo,waldo))
+    print(likeness(waldo,toSearch))
 
 if __name__ == "__main__":
     main()
