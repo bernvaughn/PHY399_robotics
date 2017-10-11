@@ -13,6 +13,11 @@ gWaldoPNG = "waldo.png"
 gImageToSearch = "new_waldoSearch02.png"
 
 def pngToList(filename):
+    '''In: filename as string that is the path and name of
+        the png file to load
+    Out: 2-dimensional list of numbers based on maximum
+        value of each pixel
+    '''
     file = Image.open(filename)
     pixels = file.load()
     w,h = file.size
@@ -30,6 +35,9 @@ def pngToList(filename):
     return list(result)
 
 def printBadMap(aList,f):
+    '''In: aList as a 2-dimensional list of numbers
+    In: f as string that is the output file's path and name
+    '''
     file = open(f,"w")
     for y in aList:
         #print("This y: ",y)
@@ -42,6 +50,9 @@ def printBadMap(aList,f):
 
 # I call it bad because it produces a list with only two values.
 def badList(aList):
+    '''In: aList as 2-dimensional list of numbers
+    Out: a list of X and _
+    '''
     result = []
     for y in aList:
         thisLine = []
@@ -52,6 +63,9 @@ def badList(aList):
     return result
 
 def growWaldo(waldo):
+    '''In: waldo as 2-dimensional list
+    Out: 2-dimensional list that is twice the size of waldo, scaled.
+    '''
     result = []
     for y in waldo:
         thisLine = []
@@ -62,27 +76,59 @@ def growWaldo(waldo):
     return result
 
 def likeness(waldo,maybeWaldo):
+    '''In: waldo as 2-dimensional list
+    In: maybeWaldo as 2-dimensional list to compare to
+    Out: likeness as float. 1 is 100% alike, .5 is 50% alike, etc.
+    '''
     likeness,count = 0,0
     for yi in range(len(waldo)):
         for xi in range(len(waldo[0])):
             count+=1
             if waldo[xi][yi] == maybeWaldo[xi][yi]: likeness += 1
     return likeness/count
+
+def find(waldo,toSearch,tolerance):
+    '''In: waldo as 2-dimensional array to find instances of
+    In: toSearch as 2-dimensional array to find waldo within
+    In: tolerance as float between 0 and 1
+        0 returns everything, 1 returns only exact matches
+    Out: list of tuples of x,y coordinates of occurances
+    '''
+    result = []
+    for yi in range(len(toSearch)-len(waldo)):
+        for xi in range(len(toSearch[0])-len(waldo[0])):
+            #get a chunk of toSearch as big as waldo and offset by xi,yi
+            thisSearch = []
+            for syi in range(yi,yi+len(waldo)):
+                thisSearch.append(toSearch[syi][xi:xi+len(waldo[0])])
+                
+            like = likeness(waldo,thisSearch)
+            if like >=tolerance:
+                result.append([xi,yi])
+##              #debug
+##              print("-"*79)
+##              for y in thisSearch:
+##                  print(y)
+##              print("-"*79)
+##              for y in waldo:
+##                  print(y)
+##              print("-"*79)
+##              print(xi,yi,like)
+##              print("-"*79)
+##          print("Waldo at: x =",xi,"y =",yi)
+    return result
         
 def main():
     waldo = (pngToList(gResourceDir+gWaldoPNG))
     toSearch = (pngToList(gResourceDir+gImageToSearch))
+    
     waldo = badList(waldo)
     toSearch = badList(toSearch)
     bigWaldo = growWaldo(waldo)
-    for item in waldo:
-        print(item)
-    print("-"*49)
-    for item in bigWaldo:
-        print(item)
-    print("-"*49)
-    print(likeness(waldo,waldo))
-    print(likeness(waldo,toSearch))
+
+    print("Running program...")
+    print("Waldos:",find(waldo,toSearch,0.8));
+    print("Big Waldos:",find(bigWaldo,toSearch,0.8));
 
 if __name__ == "__main__":
     main()
