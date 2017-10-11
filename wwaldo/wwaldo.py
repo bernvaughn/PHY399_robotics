@@ -104,7 +104,7 @@ def find(waldo,toSearch,tolerance):
                 
             like = likeness(waldo,thisSearch)
             if like >=tolerance:
-                result.append([xi,yi])
+                result.append([xi+round(len(waldo)/2),yi+round(len(waldo[0])/2)])
 ##              #debug
 ##              print("-"*79)
 ##              for y in thisSearch:
