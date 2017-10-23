@@ -6,6 +6,8 @@
 # NOTE: EDIT "gImageToSearch" to change which image is searched.
 # -----------------------------------------------
 import sys
+import math
+import copy
 from PIL import Image
 
 gResourceDir = "./resources/"
@@ -52,14 +54,14 @@ def printBadMap(aList,f):
 # I call it bad because it produces a list with only two values.
 def badList(aList):
     '''In: aList as 2-dimensional list of numbers
-    Out: a list of X and _
+    Out: a list of 1 and 0
     '''
     result = []
     for y in aList:
         thisLine = []
         for x in y:
-            if x < 150: thisLine.append("X")
-            else: thisLine.append("_")
+            if x < 150: thisLine.append(1)
+            else: thisLine.append(0)
         result.append(thisLine)
     return result
 
@@ -71,7 +73,8 @@ def growWaldo(waldo):
     for y in waldo:
         thisLine = []
         for x in y:
-            thisLine+=x+x
+            thisLine.append(x)
+            thisLine.append(x)
         result.append(thisLine)
         result.append(thisLine)
     return result
@@ -128,8 +131,96 @@ def printBadMap(badMap):
         for x in y:
             print(x,end="")
         print("")
+
+def getMoment(image,a,b):
+    '''In: image as 2-dimensional list of grey values
+    In: a as x^a
+    In: b as y^b
+    Out: moment where sum of all the pixels with x^a and y^b
+    '''
+    #values = []
+    result = 0
+    for yi in range(len(image)):
+        thisLine = []
+        for xi in range(len(image[0])):
+            thisVal = ((yi**b)+(xi**a))
+            if thisVal > 0:
+                result += thisVal
+            #thisLine.append(thisVal)
+        #values.append(thisLine)
+    return result
+
+def blobSearch(image):
+    '''In: image to blobsearch as 2-dimensional list
+    Out: 2-dimensional list of blobs labeled by number
+    '''
+    currentNum = 50
+    newImage = copy.deepcopy(image)
+    for yi in range(len(image)):
+        for xi in range(len(image[0])):
+            try:
+                thisVal = newImage[yi][xi]
+                if thisVal == 1:
+                    for i in range(9):
+                        cy = (yi-1)+(i%3)
+                        cx = (xi-1)+(math.floor(i/3))
+                        compareVal = newImage[cy][cx]
+                        #print("Compare value:",compareVal)
+                        if compareVal > 1:
+                            thisVal = compareVal
+                            print("Existing object",thisVal,"found at",xi,yi)
+                    if thisVal == 1:
+                        thisVal = currentNum
+                        currentNum += 10
+                        print("***********New object detected at:",xi,yi)
+                newImage[yi][xi] = thisVal
+            except IndexError:
+                next
+
+    print("Objs detected:",(currentNum-10)/10)
+    for y in newImage:
+        for x in y:
+            print(x,end="\t")
+        print("")
+    return newImage
+                        
+                
+
         
 def main():
+    waldo = (pngToList(gResourceDir+gWaldoPNG))
+    toSearch = (pngToList(gResourceDir+gImageToSearch))
+    
+    waldo = badList(waldo)
+    toSearch = badList(toSearch)
+    bigWaldo = growWaldo(waldo)
+
+    waldo90 = rotateWaldo(waldo)
+    waldo180 = rotateWaldo(waldo90)
+    waldo270 = rotateWaldo(waldo180)
+
+    outList = blobSearch(bigWaldo)
+    pixels_out = []
+    for row in outList:
+        for tup in row:
+            pixels_out.append(255-tup)
+
+    
+    outImage = Image.new("L",(len(outList),len(outList[0])))
+    outImage.putdata(pixels_out)
+    outImage.show()
+
+##    for wal in [waldo,waldo90,waldo180,waldo270]:
+##        for y in wal:
+##            print(y)
+##        print(getMoment(wal,0,0))
+##        print(getMoment(wal,0,2))
+##        print(getMoment(wal,2,1))
+##        print("-"*49)
+
+    
+        
+def old_main():
     waldo = (pngToList(gResourceDir+gWaldoPNG))
     toSearch = (pngToList(gResourceDir+gImageToSearch))
     
