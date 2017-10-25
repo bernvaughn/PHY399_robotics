@@ -183,7 +183,26 @@ def blobSearch(image):
             print(x,end="\t")
         print("")
     return newImage
-                        
+
+
+def firstOccurances(bImage):
+    '''In: bImage 2-dimensional list of post-blob-searched image
+    Out: Dict of values of objects with top-left bound
+    '''
+    resultDict = dict() # model: val = [Y,X]
+
+    for yi in range(len(bImage)):
+        for xi in range(len(bImage[0])):
+            thisVal = bImage[yi][xi]
+            if thisVal != 0:
+                if thisVal in resultDict:
+                    newY = min(resultDict[thisVal][0],yi)
+                    newX = min(resultDict[thisVal][1],xi)
+                    resultDict[thisVal] = [newY,newX]
+                else:
+                    resultDict[thisVal] = [yi,xi]
+
+    return resultDict
                 
 
         
@@ -200,15 +219,17 @@ def main():
     waldo270 = rotateWaldo(waldo180)
 
     outList = blobSearch(bigWaldo)
-    pixels_out = []
-    for row in outList:
-        for tup in row:
-            pixels_out.append(255-tup)
-
+    print(firstOccurances(outList))
     
-    outImage = Image.new("L",(len(outList),len(outList[0])))
-    outImage.putdata(pixels_out)
-    outImage.show()
+##    pixels_out = []
+##    for row in outList:
+##        for tup in row:
+##            pixels_out.append(255-tup)
+##
+##    
+##    outImage = Image.new("L",(len(outList),len(outList[0])))
+##    outImage.putdata(pixels_out)
+##    outImage.show()
 
 ##    for wal in [waldo,waldo90,waldo180,waldo270]:
 ##        for y in wal:
