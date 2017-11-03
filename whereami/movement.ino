@@ -5,7 +5,21 @@
 #define DIRL1 7
 #define DIRL2 4
 
-void driveForward(int speedL, int speedR){
+void setupDrive(){
+  pinMode(DRIVER,OUTPUT);
+  pinMode(DIRR1,OUTPUT);
+  pinMode(DIRR2,OUTPUT);
+  pinMode(DRIVEL,OUTPUT);
+  pinMode(DIRL1,OUTPUT);
+  pinMode(DIRL2,OUTPUT);
+
+  digitalWrite(DIRR1,LOW);
+  digitalWrite(DIRR2,HIGH);
+  digitalWrite(DIRL1,LOW);
+  digitalWrite(DIRL2,HIGH);
+}
+
+void drive(int speedR, int speedL){
   //Use analogWrite to send speedL to the driveL pin
   analogWrite(DRIVEL, speedL);
   //Use digitalWrite to send high and low signals
