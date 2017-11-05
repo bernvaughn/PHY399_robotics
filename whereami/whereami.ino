@@ -1,22 +1,24 @@
 #define ENCR 9
 #define ENCL 8
 
-#define CYCLEDELAYTIME 20 //ms
+#define CYCLEDELAYTIME 1 //ms
 
 int gLastTimeR = 0;
 int gLastTimeL = 0;
-int gX = 0;
-int gY = 0;
+float gVR = 0;
+float gVL = 0;
+float gX = 0;
+float gY = 0;
 int gPrevEncStateR = 0;
 int gPrevEncStateL = 0;
 int gStartTime = 0;
 
-int gSpeedR1 = 150;
-int gSpeedL1 = 140;
-int gSpeedR2 = 160;
-int gSpeedL2 = 150;
-int gSpeedR3 = 120;
-int gSpeedL3 = 120;
+int gSpeedR1 = 250;
+int gSpeedL1 = 240;
+int gSpeedR2 = 230;
+int gSpeedL2 = 250;
+int gSpeedR3 = 220;
+int gSpeedL3 = 220;
 
 void setup() {
   setupDisplay();
@@ -31,7 +33,6 @@ void setup() {
   gStartTime = millis();
   gLastTimeR = gStartTime;
   gLastTimeL = gStartTime;
-  
 }
 
 void loop() {
@@ -46,26 +47,42 @@ void loop() {
   // TODO: Properly handle negative speeds
   if (thisTime-gStartTime <= 5000){
     drive(gSpeedR1,gSpeedL1);
-    displayTwo(gSpeedR1,gSpeedL1);
   }
   else if (thisTime-gStartTime <= 10000){
     drive(gSpeedR2,gSpeedL2);
-    displayTwo(gSpeedR2,gSpeedL2);
   }
   else if (thisTime-gStartTime <= 15000){
     drive(gSpeedR3,gSpeedL3);
-    displayTwo(gSpeedR3,gSpeedL3);
   }
   else{
     drive(0,0);
-    displayTwo(0,0);
   }
 
-
-  //on r encoder state change
-  //  update Vr based on time since last update
-  //on l encoder state change
-  //  update Vl based on time since last update
+  int thisEncStateR = digitalRead(ENCR);
+  int thisEncStateL = digitalRead(ENCL);
+  if ((gPrevEncStateR != thisEncStateR)){
+    // each encoder wheel has 20 slots.
+    // averaged wheel diameter: 63.64mm, radius = 31.82mm
+    // circumference = 199.93mm
+    //gVR = rate/time : time is thisTime - gLastTimeR
+    if (thisEncStateR == 1){
+      float t = (thisTime - gLastTimeR)*.001; //s
+      float r = 199.93 / 20; //mm
+      gVR = r/t; //mm/s
+      gLastTimeR = thisTime;
+    }
+    gPrevEncStateR = thisEncStateR;
+  }
+  if ((gPrevEncStateL != thisEncStateL)){
+    if (thisEncStateL == 1){
+      float t = (thisTime - gLastTimeL)*.001; //s
+      float r = 199.93 / 20; //mm
+      gVL = r/t; //mm/s
+      gLastTimeL = thisTime;
+    }
+    gPrevEncStateL = thisEncStateL;
+  }
+  displayTwo(gVR,gVL);
 
   //when the time ends with a certain number
   //update x,y based on formulas above
