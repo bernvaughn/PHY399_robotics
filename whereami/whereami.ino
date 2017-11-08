@@ -2,6 +2,7 @@
 #define ENCL 8
 
 #define CYCLEDELAYTIME 1 //ms
+#define ROBOTWIDTH 5 //cm
 
 int gLastTimeR = 0;
 int gLastTimeL = 0;
@@ -9,6 +10,7 @@ float gVR = 0;
 float gVL = 0;
 float gX = 0;
 float gY = 0;
+float gAngle = 0;
 int gPrevEncStateR = 0;
 int gPrevEncStateL = 0;
 int gStartTime = 0;
@@ -82,13 +84,14 @@ void loop() {
     }
     gPrevEncStateL = thisEncStateL;
   }
-  displayTwo(gVR,gVL);
 
-  //when the time ends with a certain number
-  //update x,y based on formulas above
+  float vel = ((gVR+gVL)/2)*10; //cm/s
+  gAngle = gAngle + CYCLEDELAYTIME * (gVR-gVL)/ROBOTWIDTH;
 
+  gX = gX + CYCLEDELAYTIME * -vel * cos(gAngle); //cm
+  gY = gY + CYCLEDELAYTIME * vel * sin(gAngle); //cm
   
-  //display x,y
+  displayTwo(gX,gY);
   //display orientation intermittently
   
   delay(CYCLEDELAYTIME);
