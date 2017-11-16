@@ -66,36 +66,56 @@ void loop() {
 
   int thisEncStateR = digitalRead(ENCR);
   int thisEncStateL = digitalRead(ENCL);
-  if (((gPrevEncStateR != thisEncStateR)) or ((gPrevEncStateL != thisEncStateL))){
-      if ((gPrevEncStateR != thisEncStateR)){
-      // each encoder wheel has 20 slots.
-      // averaged wheel diameter: 63.64mm, radius = 31.82mm
-      // circumference = 199.93mm
-      //gVR = rate/time : time is thisTime - gLastTimeR
-      if (thisEncStateR == 1){
-        float t = (thisTime - gLastTimeR)*.001; //s
-        float r = WHEELRADIUS*WHEELRADIUS*3.14/20; //mm
-        gVR = r/t; //mm/s
-        gLastTimeR = thisTime;
-      }
-      gPrevEncStateR = thisEncStateR;
+  if ((gPrevEncStateR != thisEncStateR)){
+    // each encoder wheel has 20 slots.
+    // averaged wheel diameter: 63.64mm, radius = 31.82mm
+    // circumference = 199.93mm
+    //gVR = rate/time : time is thisTime - gLastTimeR
+    if (thisEncStateR == 1){
+      float t = (thisTime - gLastTimeR)*.001; //s
+      float r = WHEELRADIUS*WHEELRADIUS*3.14/20; //mm
+      gVR = r/t; //mm/s
+      gLastTimeR = thisTime;
     }
-    if ((gPrevEncStateL != thisEncStateL)){
-      if (thisEncStateL == 1){
-        float t = (thisTime - gLastTimeL)*.001; //s
-        float r = WHEELRADIUS*WHEELRADIUS*3.14/20; //mm
-        gVL = r/t; //mm/s
-        gLastTimeL = thisTime;
-      }
-      gPrevEncStateL = thisEncStateL;
-    }
-  
-    float vel = ((gVR+gVL)/2); //mm/s
-    gAngle = gAngle + (CYCLEDELAYTIME*.001) * (gVR-gVL)/ROBOTWIDTH;
-  
-    gX = gX + (CYCLEDELAYTIME*.001) * -vel * cos(gAngle); //mm
-    gY = gY + (CYCLEDELAYTIME*.001) * vel * sin(gAngle); //mm
+    gPrevEncStateR = thisEncStateR;
   }
+  if ((gPrevEncStateL != thisEncStateL)){
+    if (thisEncStateL == 1){
+      float t = (thisTime - gLastTimeL)*.001; //s
+      float r = WHEELRADIUS*WHEELRADIUS*3.14/20; //mm
+      gVL = r/t; //mm/s
+      gLastTimeL = thisTime;
+    }
+    gPrevEncStateL = thisEncStateL;
+  }
+
+  float vel = ((gVR+gVL)/2); //mm/s
+  float omega = ((gVR-gVL)/ROBOTWIDTH); //rot/s?
+
+  float k00 = vel*cos(gAngle);
+  float k01 = vel*sin(gAngle);
+  float k02 = omega;
+
+  float k10 = vel*cos(gAngle+(CYCLEDELAYTIME*k02)/2);
+  float k11 = vel*sin(gAngle+(CYCLEDELAYTIME*k02)/2);
+  float k12 = omega;
+
+  float k20 = vel*cos(gAngle+(CYCLEDELAYTIME*k12)/2);
+  float k21 = vel*sin(gAngle+(CYCLEDELAYTIME*k12)/2);
+  float k22 = omega;
+
+  float k30 = vel*cos(gAngle+(CYCLEDELAYTIME*k22));
+  float k31 = vel*sin(gAngle+(CYCLEDELAYTIME*k22));
+  float k32 = omega;
+
+  gX = gX + (CYCLEDELAYTIME/6)*(k00+2*(k10+k20)+k30);
+  gY = gY + (CYCLEDELAYTIME/6)*(k01+2*(k11+k21)+k31);
+  gAngle = gAngle + (CYCLEDELAYTIME/6)*(k02+2*(k12+k22)+k32);
+
+  //old:
+  //gAngle = gAngle + (CYCLEDELAYTIME*.001) * (gVR-gVL)/ROBOTWIDTH;
+  //gX = gX + (CYCLEDELAYTIME*.001) * -vel * cos(gAngle); //mm
+  //gY = gY + (CYCLEDELAYTIME*.001) * vel * sin(gAngle); //mm
 
   displayTwo(gX,gY);
   Serial.print(gX);
