@@ -20,6 +20,9 @@ void setupDrive(){
 }
 
 void drive(int speedR, int speedL){
+
+  //TODO: handle negative speeds
+  
   //Use analogWrite to send speedL to the driveL pin
   analogWrite(DRIVEL, speedL);
   //Use digitalWrite to send high and low signals
