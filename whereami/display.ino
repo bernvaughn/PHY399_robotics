@@ -15,14 +15,16 @@ void displayOne(float x,int label){
   // first two digits are used for label and +/-
   int digits[8];
 
+  x = abs(x);
+
   digits[0] = label;
   if (x >= 0){
     // TODO: make digits[1] = '-'
-    digits[1] = 0;
+    digits[1] = 9;
   }
   else{
     // TODO: make digits[1] = '+'
-    digits[1] = 1;
+    digits[1] = 8;
   }
   // this is ugly
   digits[2] = floor(x/10000);
@@ -32,8 +34,10 @@ void displayOne(float x,int label){
   digits[6] = floor((x-(digits[2]*10000)-(digits[3]*1000)-(digits[4]*100)-(digits[5]*10))/1);
   digits[7] = floor((x-(digits[2]*10000)-(digits[3]*1000)-(digits[4]*100)-(digits[5]*10)-(digits[6])*1)*10);
 
-  for(int i=7;i>=0;i--){
-    output(i,digits[i]);
+  digits[6] += 128; // add decimal
+
+  for(int i=8;i>=0;i--){
+    output(i,digits[8-i]);
   }
 }
 

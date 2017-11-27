@@ -19,9 +19,16 @@ int gEncTicksL = 0;
 int gEncTicksOldR = 0;
 int gEncTicksOldL = 0;
 int gStartTime = 0;
+int gDisplayState = 0;
+
+int gDesiredSpeedL = 0;
+int gDesiredSpeedR = 0;
+int gCurrentSpeedL = 0;
+int gCurrentSpeedR = 0;
+int gAcceleration = 10;
 
 int gSpeedR1 = 200;
-int gSpeedL1 = 250;
+int gSpeedL1 = 230;
 int gSpeedR2 = 0;
 int gSpeedL2 = 0;
 int gSpeedR3 = 0;
@@ -54,7 +61,7 @@ void loop() {
   long thisTime = millis();
   int thisSpeedR,thisSpeedL;
   // TODO: Properly handle negative speeds (in movement tab)
-  if (thisTime-gStartTime <= 5000){
+  if (thisTime-gStartTime <= 2500){
     thisSpeedR = gSpeedL1;
     thisSpeedL = gSpeedR1;
   }
@@ -70,7 +77,26 @@ void loop() {
     thisSpeedR = 0;
     thisSpeedL = 0;
   }
-  drive(thisSpeedR,thisSpeedL);
+  gDesiredSpeedR = thisSpeedR;
+  gDesiredSpeedL = thisSpeedL;
+
+  // acceleration to avoid slipping
+  if(gCurrentSpeedR<gDesiredSpeedR){
+    gCurrentSpeedR = min(gCurrentSpeedR+gAcceleration,gDesiredSpeedR);
+  }
+  else if(gCurrentSpeedR>gDesiredSpeedR){
+    gCurrentSpeedR = max(gCurrentSpeedR-gAcceleration,gDesiredSpeedR);
+  }
+
+  if(gCurrentSpeedL<gDesiredSpeedL){
+    gCurrentSpeedL = min(gCurrentSpeedL+gAcceleration,gDesiredSpeedL);
+  }
+  else if(gCurrentSpeedL>gDesiredSpeedL){
+    gCurrentSpeedL = max(gCurrentSpeedL-gAcceleration,gDesiredSpeedL);
+  }
+
+  
+  drive(gCurrentSpeedR,gCurrentSpeedL);
 
   int thisEncStateR = digitalRead(ENCR);
   int thisEncStateL = digitalRead(ENCL);
@@ -122,23 +148,26 @@ void loop() {
 
   gEncTicksOldR = gEncTicksR;
   gEncTicksOldL = gEncTicksL;
-  
-  if(millis()%5000==0){
-    // display angle
-    displayOne(gAngle*(180/PI),0); //deg
+
+  if(millis()%100<=2){
+    gDisplayState+=1;
+    if(gDisplayState>=3){
+      gDisplayState=0;
+    }
   }
-  else if(millis()%2500==0){
-    // display x
-    displayOne(gX,1); //mm
-  }
-  else if(millis()%1000==0){
-    // display y
-    displayOne(gY,2); //mm
-  }
-  Serial.print(gX); //mm
+
+  float displayValues[3];
+  displayValues[0] = gX; //mm
+  displayValues[1] = gY; //mm
+  displayValues[2] = gAngle*(180/PI); //deg
+
+  displayOne(displayValues[gDisplayState],gDisplayState);
+
+
+  Serial.print(displayValues[0]);
   Serial.print(" ");
-  Serial.println(gY); //mm
-  Serial.println(gAngle); //radians
+  Serial.println(displayValues[1]);
+  Serial.println(displayValues[2]);
   
   
   delay(CYCLEDELAYTIME);

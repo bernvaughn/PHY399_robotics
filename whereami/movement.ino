@@ -6,6 +6,7 @@
 #define DIRL2 4
 
 void setupDrive(){
+  //Set up the pins for driving
   pinMode(DRIVER,OUTPUT);
   pinMode(DIRR1,OUTPUT);
   pinMode(DIRR2,OUTPUT);
@@ -20,16 +21,29 @@ void setupDrive(){
 }
 
 void drive(int speedR, int speedL){
+  //Sets motor speeds to ints given
 
-  //TODO: handle negative speeds
+  //Handle negative speeds
+  if(speedR>=0){
+    digitalWrite(DIRR1,LOW);
+    digitalWrite(DIRR2,HIGH);
+  }
+  else{
+    digitalWrite(DIRR1,HIGH);
+    digitalWrite(DIRR2,LOW);
+  }
+  if(speedL>=0){
+    digitalWrite(DIRL1,LOW);
+    digitalWrite(DIRL2,HIGH);
+  }
+  else{
+    digitalWrite(DIRL1,HIGH);
+    digitalWrite(DIRL2,LOW);
+  }
   
-  //Use analogWrite to send speedL to the driveL pin
-  analogWrite(DRIVEL, speedL);
-  //Use digitalWrite to send high and low signals
-  // to dirL1 and dirL2 to set motor direction.
-  analogWrite(DRIVER, speedR);
-  //Serial.print("Speed(l,r): ");
-  //Serial.print(speedL);
-  //Serial.print(" ");
-  //Serial.println(speedR);
+  //Set motor speeds.
+  //Note that motors will stay at these speeds
+  //  indefinitely
+  analogWrite(DRIVEL, abs(speedL));
+  analogWrite(DRIVER, abs(speedR));
 }
