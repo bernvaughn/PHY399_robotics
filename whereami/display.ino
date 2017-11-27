@@ -15,8 +15,7 @@ void displayOne(float x,int label){
   // first two digits are used for label and +/-
   int digits[8];
 
-  x = abs(x);
-
+  // determine + or -
   digits[0] = label;
   if (x >= 0){
     // TODO: make digits[1] = '-'
@@ -26,6 +25,8 @@ void displayOne(float x,int label){
     // TODO: make digits[1] = '+'
     digits[1] = 8;
   }
+  x = abs(x);
+  
   // this is ugly
   digits[2] = floor(x/10000);
   digits[3] = floor((x-(digits[2]*10000))/1000);

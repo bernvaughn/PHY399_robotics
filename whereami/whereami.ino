@@ -1,7 +1,7 @@
 #define ENCR 9
 #define ENCL 8
 
-#define CYCLEDELAYTIME 15 //ms
+#define CYCLEDELAYTIME 20 //ms
 #define ROBOTWIDTH 120.57 //mm, +- 25.8mm
 #define WHEELRADIUS 31.82 //mm
 
@@ -25,9 +25,9 @@ int gDesiredSpeedL = 0;
 int gDesiredSpeedR = 0;
 int gCurrentSpeedL = 0;
 int gCurrentSpeedR = 0;
-int gAcceleration = 10;
+const int gAcceleration = 10;
 
-int gSpeedR1 = 200;
+int gSpeedR1 = 230;
 int gSpeedL1 = 230;
 int gSpeedR2 = 0;
 int gSpeedL2 = 0;
@@ -35,7 +35,7 @@ int gSpeedR3 = 0;
 int gSpeedL3 = 0;
 
 void setup() {
-  Serial.begin(9600);
+  //Serial.begin(9600);
   
   setupDisplay();
   setupDrive();
@@ -95,9 +95,10 @@ void loop() {
     gCurrentSpeedL = max(gCurrentSpeedL-gAcceleration,gDesiredSpeedL);
   }
 
-  
+  // tell the motors to get busy
   drive(gCurrentSpeedR,gCurrentSpeedL);
 
+  // get encoder ticks
   int thisEncStateR = digitalRead(ENCR);
   int thisEncStateL = digitalRead(ENCL);
   if ((gPrevEncStateR != thisEncStateR)){
@@ -115,11 +116,11 @@ void loop() {
 
 
   gVR = (gEncTicksR-gEncTicksOldR)/(CYCLEDELAYTIME*.001);
-  gVR = gVR*(3.14159/10); //rads/s?
+  gVR = gVR*(PI/10); //rads/s?
   gVR = gVR*WHEELRADIUS; //mm/s
 
   gVL = (gEncTicksL-gEncTicksOldL)/(CYCLEDELAYTIME*.001);
-  gVL = gVL*(3.14159/10); //rads/s?
+  gVL = gVL*(PI/10); //rads/s?
   gVL = gVL*WHEELRADIUS; //mm/s
   
 
@@ -149,7 +150,7 @@ void loop() {
   gEncTicksOldR = gEncTicksR;
   gEncTicksOldL = gEncTicksL;
 
-  if(millis()%100<=2){
+  if(millis()%1000<=2){
     gDisplayState+=1;
     if(gDisplayState>=3){
       gDisplayState=0;
@@ -163,11 +164,12 @@ void loop() {
 
   displayOne(displayValues[gDisplayState],gDisplayState);
 
-
+  /*
   Serial.print(displayValues[0]);
   Serial.print(" ");
   Serial.println(displayValues[1]);
   Serial.println(displayValues[2]);
+  */
   
   
   delay(CYCLEDELAYTIME);
