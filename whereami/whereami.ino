@@ -27,12 +27,12 @@ int gCurrentSpeedL = 0;
 int gCurrentSpeedR = 0;
 const int gAcceleration = 10;
 
-int gSpeedR1 = 230;
-int gSpeedL1 = 230;
-int gSpeedR2 = 0;
-int gSpeedL2 = 0;
-int gSpeedR3 = 0;
-int gSpeedL3 = 0;
+int gSpeedR1 = 100;
+int gSpeedL1 = 100;
+int gSpeedR2 = 120;
+int gSpeedL2 = 80;
+int gSpeedR3 = -100;
+int gSpeedL3 = 100;
 
 void setup() {
   //Serial.begin(9600);
@@ -61,7 +61,7 @@ void loop() {
   long thisTime = millis();
   int thisSpeedR,thisSpeedL;
   // TODO: Properly handle negative speeds (in movement tab)
-  if (thisTime-gStartTime <= 2500){
+  if (thisTime-gStartTime <= 5000){
     thisSpeedR = gSpeedL1;
     thisSpeedL = gSpeedR1;
   }
