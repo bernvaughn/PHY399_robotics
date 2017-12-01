@@ -13,7 +13,10 @@ void output(byte address, byte data){
 void displayOne(float x,int label){
   // displays a value with range -99999.9 to 99999.9
   // first two digits are used for label and +/-
+  
   int digits[8];
+
+  resetDisplay(); //quick fix for connection issues
 
   // determine + or -
   digits[0] = label;
@@ -88,3 +91,12 @@ void setupDisplay() {
   output(0x0a, 0x05); //intensity register - max brightness 00 to 0f
   output(0x09, 0xff); //decode mode register - CodeB decode all digits
 }
+
+void resetDisplay(){
+  output(0x0f, 0x00); //display test register - test mode off
+  output(0x0c, 0x01); //shutdown register - normal operation
+  output(0x0b, 0x07); //scan limit register - display digits 0 thru 7
+  output(0x0a, 0x05); //intensity register - max brightness 00 to 0f
+  output(0x09, 0xff); //decode mode register - CodeB decode all digits
+}
+
