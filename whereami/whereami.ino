@@ -1,9 +1,20 @@
+//TODO: interrupt encoders, look at volatile ints
+//TODO: undebugmode segment display output
+
+const int gSpeedR1 = 100; //140,150 for straight
+const int gSpeedL1 = 100; //120,140 for straight
+const int gSpeedR2 = 0;
+const int gSpeedL2 = 0;
+const int gSpeedR3 = 0;
+const int gSpeedL3 = 0;
+
 #define ENCR 9
 #define ENCL 8
 
-#define CYCLEDELAYTIME 5 //ms
-#define ROBOTWIDTH 133.47 //mm, //120.57 +- 25.8mm
-#define WHEELRADIUS 32.82 //mm //32.82mm?
+#define CYCLEDELAYTIME 1 //ms
+#define ROBOTWIDTH 108 //mm , //100 to 116mm
+// old wheels: //120.57 +- 25.8mm
+#define WHEELRADIUS 32 //mm //32.82mm?
 
 int gLastTimeR = 0;
 int gLastTimeL = 0;
@@ -12,29 +23,19 @@ double gVL = 0;
 double gX = 0;
 double gY = 0;
 double gAngle = 0;
-int gPrevEncStateR = 0;
-int gPrevEncStateL = 0;
-int gEncTicksR = 0;
-int gEncTicksL = 0;
-int gEncTicksOldR = 0;
-int gEncTicksOldL = 0;
+volatile int gPrevEncStateR = 0;
+volatile int gPrevEncStateL = 0;
+volatile int gEncTicksR = 0;
+volatile int gEncTicksL = 0;
+volatile int gEncTicksOldR = 0;
+volatile int gEncTicksOldL = 0;
 int gStartTime = 0;
 int gDisplayState = 0;
-long gThisTime = 0;
-long gOldTime = 0;
-
-int gDesiredSpeedL = 0;
-int gDesiredSpeedR = 0;
 int gCurrentSpeedL = 0;
 int gCurrentSpeedR = 0;
-const int gAcceleration = 1000; // set to 1000 to make obsolete
+long gOldTime = 0;
 
-int gSpeedR1 = 120; //140
-int gSpeedL1 = 120; //120 for straight
-int gSpeedR2 = 120;
-int gSpeedL2 = -120;
-int gSpeedR3 = 0;
-int gSpeedL3 = 0;
+const int gAcceleration = 1000; // set to 1000 to make obsolete
 
 void setup() {
   //Serial.begin(9600);
@@ -54,55 +55,46 @@ void setup() {
   gOldTime = gStartTime;
 }
 
+int getDesiredSpeedL(int thisTime){
+  if (thisTime-gStartTime <= 5000) return gSpeedL1;
+  else if (thisTime-gStartTime <= 10000) return gSpeedL2;
+  else if (thisTime-gStartTime <= 15000) return gSpeedL3;
+  return 0;
+}
+
+int getDesiredSpeedR(int thisTime){
+  if (thisTime-gStartTime <= 5000) return gSpeedR1;
+  else if (thisTime-gStartTime <= 10000) return gSpeedR2;
+  else if (thisTime-gStartTime <= 15000) return gSpeedR3;
+  return 0;
+}
+
+void setCurrentSpeed(int desiredSpeedR,int desiredSpeedL){
+  //R
+  if(gCurrentSpeedR<desiredSpeedR) gCurrentSpeedR = min(gCurrentSpeedR+gAcceleration,desiredSpeedR);
+  else if(gCurrentSpeedR>desiredSpeedR) gCurrentSpeedR = max(gCurrentSpeedR-gAcceleration,desiredSpeedR);
+  //L
+  if(gCurrentSpeedL<desiredSpeedL) gCurrentSpeedL = min(gCurrentSpeedL+gAcceleration,desiredSpeedL);
+  else if(gCurrentSpeedL>desiredSpeedL) gCurrentSpeedL = max(gCurrentSpeedL-gAcceleration,desiredSpeedL);
+}
+
 void loop() {
+  int desiredSpeedR = getDesiredSpeedR(thisTime);
+  int desiredSpeedL = getDesiredSpeedL(thisTime);
 
-  long thisTime = millis();
-  int thisSpeedR,thisSpeedL;
-  
-  if (thisTime-gStartTime <= 5000){
-    thisSpeedR = gSpeedL1;
-    thisSpeedL = gSpeedR1;
-  }
-  else if (thisTime-gStartTime <= 10000){
-    thisSpeedR = gSpeedL2;
-    thisSpeedL = gSpeedR2;
-  }
-  else if (thisTime-gStartTime <= 15000){
-    thisSpeedR = gSpeedL3;
-    thisSpeedL = gSpeedR3;
-  }
-  else{
-    thisSpeedR = 0;
-    thisSpeedL = 0;
-  }
-  gDesiredSpeedR = thisSpeedR;
-  gDesiredSpeedL = thisSpeedL;
-
-  // acceleration to avoid slipping
-  if(gCurrentSpeedR<gDesiredSpeedR){
-    gCurrentSpeedR = min(gCurrentSpeedR+gAcceleration,gDesiredSpeedR);
-  }
-  else if(gCurrentSpeedR>gDesiredSpeedR){
-    gCurrentSpeedR = max(gCurrentSpeedR-gAcceleration,gDesiredSpeedR);
-  }
-
-  if(gCurrentSpeedL<gDesiredSpeedL){
-    gCurrentSpeedL = min(gCurrentSpeedL+gAcceleration,gDesiredSpeedL);
-  }
-  else if(gCurrentSpeedL>gDesiredSpeedL){
-    gCurrentSpeedL = max(gCurrentSpeedL-gAcceleration,gDesiredSpeedL);
-  }
-
+  // handle acceleration to avoid slipping
+  setCurrentSpeed(desiredSpeedR,desiredSpeedL);
   // tell the motors to get busy
   drive(gCurrentSpeedR,gCurrentSpeedL);
+  
   //delay
   delay(CYCLEDELAYTIME);
 
-  gThisTime = millis();
-
-  long deltaTime = gThisTime-gOldTime;
+  long thisTime = millis();
+  long deltaTime = thisTime-gOldTime; //ms
 
   // get encoder ticks
+  // TODO: change this to an interrupt
   int thisEncStateR = digitalRead(ENCR);
   int thisEncStateL = digitalRead(ENCL);
   if ((gPrevEncStateR != thisEncStateR)){
@@ -163,13 +155,17 @@ void loop() {
   }
 
   double displayValues[3];
-  displayValues[0] = gX; //mm
-  displayValues[1] = gY; //mm
-  displayValues[2] = gAngle*(180/PI); //deg
+  //displayValues[0] = gX; //mm
+  //displayValues[1] = gY; //mm
+  //displayValues[2] = gAngle*(180/PI); //deg
+
+  displayValues[0] = gEncTicksR;
+  displayValues[1] = gEncTicksL;
+  displayValues[2] = deltaTime;
 
   displayOne(displayValues[gDisplayState],gDisplayState);
 
-  gOldTime = gThisTime;
+  gOldTime = thisTime;
 
   /*
   Serial.print(displayValues[0]);
