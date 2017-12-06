@@ -1,9 +1,9 @@
-#define DRIVER 5 // control speed of motor, pwm 0-255
-#define DIRR1 7 // make output1 high or low, clockwise/counter
-#define DIRR2 4 // output pin 2 high or low, needs to be opposite of input1
-#define DRIVEL 6
-#define DIRL1 2
-#define DIRL2 3
+#define DRIVER 6 // control speed of motor, pwm 0-255
+#define DIRR1 2 // make output1 high or low, clockwise/counter
+#define DIRR2 3 // output pin 2 high or low, needs to be opposite of input1
+#define DRIVEL 5
+#define DIRL1 7
+#define DIRL2 4
 
 void setupDrive(){
   //Set up the pins for driving

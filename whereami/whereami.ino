@@ -1,41 +1,54 @@
-//TODO: interrupt encoders, look at volatile ints
 //TODO: undebugmode segment display output
 
-const int gSpeedR1 = 100; //140,150 for straight
-const int gSpeedL1 = 100; //120,140 for straight
-const int gSpeedR2 = 0;
-const int gSpeedL2 = 0;
-const int gSpeedR3 = 0;
-const int gSpeedL3 = 0;
+const long gSpeedR1 = 0; //140,150 for straight
+const long gSpeedL1 = 100; //120,140 for straight
+const long gSpeedR2 = 0;
+const long gSpeedL2 = 0;
+const long gSpeedR3 = 0;
+const long gSpeedL3 = 0;
+// increment (or decrement) speed by this
+//  amount until it reaches the desired value
+const long gAcceleration = 1000; // set to 1000 to make obsolete
 
-#define ENCR 9
-#define ENCL 8
+#define ENCR 19 //WAS: 9
+#define ENCL 18 //WAS: 8
 
-#define CYCLEDELAYTIME 1 //ms
+#define CYCLEDELAYTIME 14 //ms
 #define ROBOTWIDTH 108 //mm , //100 to 116mm
 // old wheels: //120.57 +- 25.8mm
 #define WHEELRADIUS 32 //mm //32.82mm?
 
-int gLastTimeR = 0;
-int gLastTimeL = 0;
+// measures ms of last loop iteration
+long gLastTimeR = 0;
+long gLastTimeL = 0;
+// location variables
 double gVR = 0;
 double gVL = 0;
 double gX = 0;
 double gY = 0;
 double gAngle = 0;
-volatile int gPrevEncStateR = 0;
-volatile int gPrevEncStateL = 0;
-volatile int gEncTicksR = 0;
-volatile int gEncTicksL = 0;
-volatile int gEncTicksOldR = 0;
-volatile int gEncTicksOldL = 0;
-int gStartTime = 0;
-int gDisplayState = 0;
-int gCurrentSpeedL = 0;
-int gCurrentSpeedR = 0;
+// flags to tell interrupt which direction wheels
+//  are spinning
+bool gForwardR = 1; // 1 means moved forward last
+bool gForwardL = 1; // 0 means moved backward last
+// for keeping total ticks. can be negative when
+//  backwards movement.
+volatile long gTotEncTicksR = 0;
+volatile long gTotEncTicksL = 0;
+// measures ticks of last loop iteration.
+long gEncTicksOldR = 0;
+long gEncTicksOldL = 0;
+// store millis() from when loop started
+long gStartTime = 0;
+// index of item to display on 8-segment
+long gDisplayState = 0;
+// need these because functions can't
+//  easily return arrays.
+long gCurrentSpeedL = 0;
+long gCurrentSpeedR = 0;
+// stores millis() of previous loop iteration
 long gOldTime = 0;
 
-const int gAcceleration = 1000; // set to 1000 to make obsolete
 
 void setup() {
   //Serial.begin(9600);
@@ -43,11 +56,11 @@ void setup() {
   setupDisplay();
   setupDrive();
   
-  pinMode(ENCR,INPUT);
-  pinMode(ENCL,INPUT);
-
-  gPrevEncStateR = digitalRead(ENCR);
-  gPrevEncStateL = digitalRead(ENCL);
+  //pinMode(ENCR,INPUT);
+  //pinMode(ENCL,INPUT);
+  // when ENCR goes from low to high, fire encTickedR. Similar for ENCL.
+  attachInterrupt(digitalPinToInterrupt(ENCR), encTickedR, RISING);
+  attachInterrupt(digitalPinToInterrupt(ENCL), encTickedL, RISING);
   
   gStartTime = millis();
   gLastTimeR = gStartTime;
@@ -55,21 +68,35 @@ void setup() {
   gOldTime = gStartTime;
 }
 
-int getDesiredSpeedL(int thisTime){
+//interrupts
+void encTickedR(){
+  // interrupt
+  // when the encoder goes high
+  if (gForwardR == 1) gTotEncTicksR += 1;
+  else gTotEncTicksR -= 1;
+}
+void encTickedL(){
+  // interrupt
+  // when the encoder goes high
+  if (gForwardL == 1) gTotEncTicksL += 1;
+  else gTotEncTicksL -= 1;
+}
+
+
+long getDesiredSpeedL(long thisTime){
   if (thisTime-gStartTime <= 5000) return gSpeedL1;
   else if (thisTime-gStartTime <= 10000) return gSpeedL2;
   else if (thisTime-gStartTime <= 15000) return gSpeedL3;
   return 0;
 }
-
-int getDesiredSpeedR(int thisTime){
+long getDesiredSpeedR(long thisTime){
   if (thisTime-gStartTime <= 5000) return gSpeedR1;
   else if (thisTime-gStartTime <= 10000) return gSpeedR2;
   else if (thisTime-gStartTime <= 15000) return gSpeedR3;
   return 0;
 }
 
-void setCurrentSpeed(int desiredSpeedR,int desiredSpeedL){
+void setCurrentSpeed(long desiredSpeedR,long desiredSpeedL){
   //R
   if(gCurrentSpeedR<desiredSpeedR) gCurrentSpeedR = min(gCurrentSpeedR+gAcceleration,desiredSpeedR);
   else if(gCurrentSpeedR>desiredSpeedR) gCurrentSpeedR = max(gCurrentSpeedR-gAcceleration,desiredSpeedR);
@@ -79,43 +106,36 @@ void setCurrentSpeed(int desiredSpeedR,int desiredSpeedL){
 }
 
 void loop() {
-  int desiredSpeedR = getDesiredSpeedR(thisTime);
-  int desiredSpeedL = getDesiredSpeedL(thisTime);
+  long thisTime = millis();
+  
+  long desiredSpeedR = getDesiredSpeedR(thisTime);
+  long desiredSpeedL = getDesiredSpeedL(thisTime);
 
   // handle acceleration to avoid slipping
   setCurrentSpeed(desiredSpeedR,desiredSpeedL);
   // tell the motors to get busy
   drive(gCurrentSpeedR,gCurrentSpeedL);
+  // update forward flags
+  if(gCurrentSpeedR>=0) gForwardR = 1;
+  else gForwardR = 0;
+  if(gCurrentSpeedL>=0) gForwardL = 1;
+  else gForwardL = 0;
+  
   
   //delay
   delay(CYCLEDELAYTIME);
 
-  long thisTime = millis();
   long deltaTime = thisTime-gOldTime; //ms
 
   // get encoder ticks
-  // TODO: change this to an interrupt
-  int thisEncStateR = digitalRead(ENCR);
-  int thisEncStateL = digitalRead(ENCL);
-  if ((gPrevEncStateR != thisEncStateR)){
-    if (thisEncStateR == 1){
-      gEncTicksR += 1;
-    }
-    gPrevEncStateR = thisEncStateR;
-  }
-  if ((gPrevEncStateL != thisEncStateL)){
-    if (thisEncStateL == 1){
-      gEncTicksL += 1;
-    }
-    gPrevEncStateL = thisEncStateL;
-  }
+  long encTicksR = gTotEncTicksR;
+  long encTicksL = gTotEncTicksL;
 
-
-  gVR = (gEncTicksR-gEncTicksOldR)/(deltaTime*.001);
+  gVR = (encTicksR-gEncTicksOldR)/(deltaTime*.001);
   gVR = gVR*(PI/10); //rads/s?
   gVR = gVR*WHEELRADIUS; //mm/s
 
-  gVL = (gEncTicksL-gEncTicksOldL)/(deltaTime*.001);
+  gVL = (encTicksL-gEncTicksOldL)/(deltaTime*.001);
   gVL = gVL*(PI/10); //rads/s?
   gVL = gVL*WHEELRADIUS; //mm/s
   
@@ -143,11 +163,11 @@ void loop() {
   gY = gY + ((deltaTime*.001)/6)*(k01+2*(k11+k21)+k31); //mm
   gAngle = gAngle + ((deltaTime*.001)/6)*(k02+2*(k12+k22)+k32); //radians
 
-  gEncTicksOldR = gEncTicksR;
-  gEncTicksOldL = gEncTicksL;
+  gEncTicksOldR = encTicksR;
+  gEncTicksOldL = encTicksL;
 
   //chage display state. This code is wonky, but it works.
-  if(millis()%1000<=3){
+  if(millis()%1000<=CYCLEDELAYTIME+5){
     gDisplayState+=1;
     if(gDisplayState>=3){
       gDisplayState=0;
@@ -159,8 +179,8 @@ void loop() {
   //displayValues[1] = gY; //mm
   //displayValues[2] = gAngle*(180/PI); //deg
 
-  displayValues[0] = gEncTicksR;
-  displayValues[1] = gEncTicksL;
+  displayValues[0] = gTotEncTicksR;
+  displayValues[1] = gTotEncTicksL;
   displayValues[2] = deltaTime;
 
   displayOne(displayValues[gDisplayState],gDisplayState);
@@ -168,9 +188,9 @@ void loop() {
   gOldTime = thisTime;
 
   /*
-  Serial.print(displayValues[0]);
-  Serial.print(" ");
-  Serial.println(displayValues[1]);
-  Serial.println(displayValues[2]);
+  Serial.prlong(displayValues[0]);
+  Serial.prlong(" ");
+  Serial.prlongln(displayValues[1]);
+  Serial.prlongln(displayValues[2]);
   */
 }
